@@ -22,7 +22,7 @@ public abstract class Backend<T> {
     private final ThreadPoolRegistry threadPoolRegistry;
     private final DatabaseLib databaseLib;
     private final LanguageRegistry languageRegistry;
-    
+
     public Backend() {
         this.threadPoolRegistry = ThreadPoolRegistryImpl.create();
         this.databaseLib = DatabaseLibImpl.create(this.threadPoolRegistry);
@@ -40,4 +40,7 @@ public abstract class Backend<T> {
         return this.languageRegistry;
     }
 
+    public ThreadPoolRegistry getThreadPoolRegistry() {
+        return threadPoolRegistry;
+    }
 }
