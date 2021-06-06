@@ -1,0 +1,6 @@
+main: me.phantomclone.phoenixnetwork.backendspigot.BackendPlugin
+name: SpigotBackend
+author: PhantomClone
+version: 1.0
+commands:
+  spigotTest:

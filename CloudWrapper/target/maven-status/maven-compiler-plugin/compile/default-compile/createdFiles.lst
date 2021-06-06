@@ -1,0 +1,17 @@
+me\phantomclone\phoenixnetwork\cloudwrapper\utils\FileEditor.class
+me\phantomclone\phoenixnetwork\cloudwrapper\server\watcher\ServerGroupWatchdog.class
+me\phantomclone\phoenixnetwork\cloudwrapper\server\watcher\ServerDataImpl.class
+me\phantomclone\phoenixnetwork\cloudwrapper\server\MinecraftServer$1.class
+me\phantomclone\phoenixnetwork\cloudwrapper\server\watcher\ServerData.class
+me\phantomclone\phoenixnetwork\cloudwrapper\server\watcher\ServerGroupWatchdogImpl.class
+me\phantomclone\phoenixnetwork\cloudwrapper\server\ServerGroupImpl.class
+me\phantomclone\phoenixnetwork\cloudwrapper\server\ProxyServer$1.class
+me\phantomclone\phoenixnetwork\cloudwrapper\network\WrapperPacketListener$1.class
+me\phantomclone\phoenixnetwork\cloudwrapper\bootstrap\Bootstrap.class
+me\phantomclone\phoenixnetwork\cloudwrapper\server\ProxyServer.class
+me\phantomclone\phoenixnetwork\cloudwrapper\server\ServerGroupRegistryImpl.class
+me\phantomclone\phoenixnetwork\cloudwrapper\CloudWrapper.class
+me\phantomclone\phoenixnetwork\cloudwrapper\server\MinecraftServer.class
+me\phantomclone\phoenixnetwork\cloudwrapper\network\WrapperPacketListener.class
+me\phantomclone\phoenixnetwork\cloudwrapper\server\ServerGroupRegistry.class
+me\phantomclone\phoenixnetwork\cloudwrapper\server\ServerGroup.class

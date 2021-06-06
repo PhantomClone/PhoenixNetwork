@@ -1,0 +1,15 @@
+me\phantomclone\phoenixnetwork\backendspigot\api\inventory\ClickableInventoryFactory.class
+me\phantomclone\phoenixnetwork\backendspigot\storage\DataStoreInRedisEvent.class
+me\phantomclone\phoenixnetwork\backendspigot\api\inventory\ClickableItem.class
+me\phantomclone\phoenixnetwork\backendspigot\api\inventory\ClickableInventoryFactory$1$ClickableItemImpl.class
+me\phantomclone\phoenixnetwork\backendspigot\BackendPlugin.class
+me\phantomclone\phoenixnetwork\backendspigot\storage\BasicData.class
+me\phantomclone\phoenixnetwork\backendspigot\SpigotBackend.class
+me\phantomclone\phoenixnetwork\backendspigot\storage\StorageRegistryImpl$LoginAndOutListener.class
+me\phantomclone\phoenixnetwork\backendspigot\api\inventory\ClickableInventoryFactory$1$1.class
+me\phantomclone\phoenixnetwork\backendspigot\api\inventory\ClickableInventory.class
+me\phantomclone\phoenixnetwork\backendspigot\server\ServerChangerImpl.class
+me\phantomclone\phoenixnetwork\backendspigot\storage\DataLoadOutRedisEvent.class
+me\phantomclone\phoenixnetwork\backendspigot\api\inventory\ClickableInventoryFactory$1.class
+me\phantomclone\phoenixnetwork\backendspigot\storage\StorageRegistryImpl.class
+me\phantomclone\phoenixnetwork\backendspigot\storage\StorageRegistryImpl$1.class
