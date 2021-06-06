@@ -44,17 +44,13 @@ public class BackendPlugin extends Plugin implements Listener {
 
         getProxy().getPluginManager().registerListener(this, this);
 
-        this.backend.getStorageRegistry().registerStorable(BasicData.class,
-                new BiConsumer<ProxiedPlayer, Map<String, Object>>() {
-                    @Override
-                    public void accept(ProxiedPlayer player, Map<String, Object> map) {
-                        map.put("name", player.getName());
-                        map.put("firstLogin", System.currentTimeMillis());
-                        map.put("lastLogin", System.currentTimeMillis());
-                        map.put("playtime", 0L);
-                        map.put("nameHistory", Lists.newArrayList(player.getName()));
-                        map.put("language", 0);
-                    }
+        this.backend.getStorageRegistry().registerStorable(BasicData.class, (player, map) -> {
+                    map.put("name", player.getName());
+                    map.put("firstLogin", System.currentTimeMillis());
+                    map.put("lastLogin", System.currentTimeMillis());
+                    map.put("playtime", 0L);
+                    map.put("nameHistory", Lists.newArrayList(player.getName()));
+                    map.put("language", 0);
                 });
         getProxy().getPluginManager().registerCommand(this, new Command("removeBlockedUUID") {
             @Override
