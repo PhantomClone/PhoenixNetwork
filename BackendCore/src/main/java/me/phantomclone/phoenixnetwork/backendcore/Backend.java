@@ -10,6 +10,8 @@ import me.phantomclone.phoenixnetwork.backendcore.language.LanguageRegistry;
 import me.phantomclone.phoenixnetwork.backendcore.language.LanguageRegistryImpl;
 import me.phantomclone.phoenixnetwork.backendcore.server.ServerChanger;
 import me.phantomclone.phoenixnetwork.backendcore.storage.StorageRegistry;
+import me.phantomclone.phoenixnetwork.backendcore.thread.ThreadPoolRegistry;
+import me.phantomclone.phoenixnetwork.backendcore.thread.ThreadPoolRegistryImpl;
 
 /**
  * @author PhantomClone
@@ -17,11 +19,13 @@ import me.phantomclone.phoenixnetwork.backendcore.storage.StorageRegistry;
  */
 public abstract class Backend<T> {
 
+    private final ThreadPoolRegistry threadPoolRegistry;
     private final DatabaseLib databaseLib;
     private final LanguageRegistry languageRegistry;
-
+    
     public Backend() {
-        this.databaseLib = DatabaseLibImpl.create();
+        this.threadPoolRegistry = ThreadPoolRegistryImpl.create();
+        this.databaseLib = DatabaseLibImpl.create(this.threadPoolRegistry);
         this.languageRegistry = LanguageRegistryImpl.create();
     }
 
