@@ -77,10 +77,7 @@ public class ServerChangerImpl implements ServerChanger<ProxiedPlayer>, Listener
             } else if (server.contains(":")) {
                 this.plugin.getServerRegistry().sendPlayerToServer(player, server.replace(":", "_"), b -> {});
             } else {
-                //TODO REMOVE WHEN CLOUD SERVER REGISTRY IS IMPLEMENTED
-                ServerInfo serverInfo = plugin.getProxy().getServerInfo(server);
-                player.connect(serverInfo);
-                //this.plugin.getServerRegistry().sendPlayerToServer(player, server, b -> {});
+                this.plugin.getServerRegistry().sendPlayerToServer(player, server, b -> {});
             }
         }
     }
