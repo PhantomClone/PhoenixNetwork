@@ -15,6 +15,7 @@ import me.phantomclone.phoenixnetwork.backendbungee.BackendPlugin;
 import me.phantomclone.phoenixnetwork.backendcore.config.Config;
 import me.phantomclone.phoenixnetwork.backendcore.config.ConfigImpl;
 import me.phantomclone.phoenixnetwork.backendcore.database.mongodb.Client;
+import me.phantomclone.phoenixnetwork.backendcore.database.mongodb.result.UpdateResultSubscriber;
 import me.phantomclone.phoenixnetwork.backendcore.storage.StorageRegistry;
 import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
@@ -121,45 +122,30 @@ public class StorageRegistryImpl implements StorageRegistry<ProxiedPlayer> {
                                 document.forEach((className, json) -> jedis.hset("toSave." + uuid.toString(), className, json.toString()));
                                 jedis.publish("LoadedOfflinePlayer", uuid.toString() + "/Loaded");
                             }, throwable -> jedis.publish("LoadedOfflinePlayer", uuid.toString() + "/Failed"));
-                        } else if (channel.equalsIgnoreCase("__keyevent@0__:expired")) {
-                            Map<String, String> redisMap = jedis.hgetAll("toSave." + message);
-                            jedis.del("toSave." + message);
+                        } else if (channel.equalsIgnoreCase("__keyevent@0__:expired") && message.startsWith("offline.")) {
+                            UUID uuid = UUID.fromString(message.replace("offline.", ""));
+                            Map<String, String> redisMap = jedis.hgetAll("toSave." + uuid.toString());
+                            jedis.del("toSave." + uuid.toString());
                             Document document = new Document();
                             redisMap.forEach(document::append);
 
-                            Publisher<UpdateResult> publisher = collection.replaceOne(Filters.eq("_id", message), document);
-                            publisher.subscribe(new Subscriber<UpdateResult>() {
-                                @Override
-                                public void onSubscribe(Subscription s) {
-                                    s.request(1);
+                            Publisher<UpdateResult> publisher = collection.replaceOne(Filters.eq("_id", uuid.toString()), document);
+                            publisher.subscribe(new UpdateResultSubscriber(b -> {}, throwable -> {
+                                Config config = ConfigImpl.create();
+                                config.set("Error", throwable.getMessage());
+                                config.set("uuid", uuid.toString());
+                                config.set("data", gson.toJson(redisMap));
+                                StringWriter stringWriter = new StringWriter();
+                                PrintWriter printWriter = new PrintWriter(stringWriter);
+                                throwable.printStackTrace(printWriter);
+                                config.set("Stacktrace", stringWriter.toString());
+                                File saveFile = new File("./plugins/Backend/SaveOfflineDataFail/", message + "--" + (new Random().nextInt(100)));
+                                try {
+                                    config.save(saveFile);
+                                } catch (IOException e) {
+                                    e.printStackTrace();
                                 }
-
-                                @Override
-                                public void onNext(UpdateResult updateResult) {
-                                }
-
-                                @Override
-                                public void onError(Throwable throwable) {
-                                    Config config = ConfigImpl.create();
-                                    config.set("Error", throwable.getMessage());
-                                    config.set("uuid", message);
-                                    config.set("data", gson.toJson(redisMap));
-                                    StringWriter stringWriter = new StringWriter();
-                                    PrintWriter printWriter = new PrintWriter(stringWriter);
-                                    throwable.printStackTrace(printWriter);
-                                    config.set("Stacktrace", stringWriter.toString());
-                                    File saveFile = new File("./plugins/Backend/SaveDataFail/", message + "--" + (new Random().nextInt(100)));
-                                    saveFile.getParentFile().mkdirs();
-                                    try {
-                                        config.save(saveFile);
-                                    } catch (IOException e) {
-                                        e.printStackTrace();
-                                    }
-                                }
-
-                                @Override
-                                public void onComplete() { }
-                            });
+                            }));
                         }
                     }
                 }, "BackendUpdateData", "LoadOfflinePlayer", "__keyevent@0__:expired");
@@ -201,40 +187,37 @@ public class StorageRegistryImpl implements StorageRegistry<ProxiedPlayer> {
         redisMap.forEach(document::append);
 
         Publisher<UpdateResult> publisher = collection.replaceOne(Filters.eq("_id", uuid.toString()), document);
-        publisher.subscribe(new Subscriber<UpdateResult>() {
-            @Override
-            public void onSubscribe(Subscription s) {
-                s.request(1);
-            }
-
-            @Override
-            public void onNext(UpdateResult updateResult) {
-            }
-
-            @Override
-            public void onError(Throwable throwable) {
+        publisher.subscribe(new UpdateResultSubscriber(b -> {
+            if (b) {
+                this.blockedUUIDs.remove(uuid.toString());
+            } else {
                 Config config = ConfigImpl.create();
-                config.set("Error", throwable.getMessage());
+                config.set("Error", "Filter: _id:" + uuid + " no match");
                 config.set("uuid", uuid.toString());
                 config.set("data", gson.toJson(redisMap));
-                StringWriter stringWriter = new StringWriter();
-                PrintWriter printWriter = new PrintWriter(stringWriter);
-                throwable.printStackTrace(printWriter);
-                config.set("Stacktrace", stringWriter.toString());
                 File saveFile = new File("./plugins/Backend/SaveDataFail/", uuid.toString() + "--" + (new Random().nextInt(100)));
-                saveFile.getParentFile().mkdirs();
                 try {
                     config.save(saveFile);
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
             }
-
-            @Override
-            public void onComplete() {
-                blockedUUIDs.remove(uuid.toString());
+        }, throwable -> {
+            Config config = ConfigImpl.create();
+            config.set("Error", throwable.getMessage());
+            config.set("uuid", uuid.toString());
+            config.set("data", gson.toJson(redisMap));
+            StringWriter stringWriter = new StringWriter();
+            PrintWriter printWriter = new PrintWriter(stringWriter);
+            throwable.printStackTrace(printWriter);
+            config.set("Stacktrace", stringWriter.toString());
+            File saveFile = new File("./plugins/Backend/SaveDataFail/", uuid.toString() + "--" + (new Random().nextInt(100)));
+            try {
+                config.save(saveFile);
+            } catch (IOException e) {
+                e.printStackTrace();
             }
-        });
+        }));
     }
 
     @Override
