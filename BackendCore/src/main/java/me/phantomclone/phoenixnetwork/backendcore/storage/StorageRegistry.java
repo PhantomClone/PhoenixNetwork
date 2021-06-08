@@ -7,6 +7,7 @@ package me.phantomclone.phoenixnetwork.backendcore.storage;
 import java.util.Map;
 import java.util.UUID;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 /**
  * @author PhantomClone
@@ -23,6 +24,6 @@ public interface StorageRegistry<T> {
 
     <B> B getStoreObject(UUID uuid, Class<B> clazz);
 
-    void store(UUID uuid);
-
+    void storeInRedis(UUID uuid, Object object);
+    <B> void getOfflineObject(Class<B> clazz, UUID uuid, Consumer<B> consumer);
 }

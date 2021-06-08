@@ -4,6 +4,7 @@ import com.google.common.io.ByteArrayDataInput;
 import com.google.common.io.ByteStreams;
 import me.phantomclone.phoenixnetwork.backendcore.server.ServerChanger;
 import me.phantomclone.phoenixnetwork.backendspigot.BackendPlugin;
+import me.phantomclone.phoenixnetwork.backendspigot.storage.StorageRegistryImpl;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.HandlerList;
@@ -44,10 +45,11 @@ public class ServerChangerImpl implements ServerChanger<Player>, PluginMessageLi
     @Override
     public void sendPlayerToServer(Player player, String host, String port) {
         this.plugin.getServer().getScheduler().runTaskAsynchronously(this.plugin, () -> {
-            this.plugin.getBackend().getStorageRegistry().store(player.getUniqueId());
+            ((StorageRegistryImpl) this.plugin.getBackend().getStorageRegistry()).store(player.getUniqueId());
             ByteArrayOutputStream stream = new ByteArrayOutputStream();
             DataOutputStream out = new DataOutputStream(stream);
             try {
+                out.writeUTF("SendPlayerToServer");
                 out.writeUTF(player.getUniqueId().toString());
                 out.writeUTF(host + "_" + port);
             } catch (IOException e) {
@@ -60,10 +62,11 @@ public class ServerChangerImpl implements ServerChanger<Player>, PluginMessageLi
     @Override
     public void sendPlayerToServer(Player player, String serverName) {
         this.plugin.getServer().getScheduler().runTaskAsynchronously(this.plugin, () -> {
-            this.plugin.getBackend().getStorageRegistry().store(player.getUniqueId());
+            ((StorageRegistryImpl)this.plugin.getBackend().getStorageRegistry()).store(player.getUniqueId());
             ByteArrayOutputStream stream = new ByteArrayOutputStream();
             DataOutputStream out = new DataOutputStream(stream);
             try {
+                out.writeUTF("SendPlayerToServer");
                 out.writeUTF(player.getUniqueId().toString());
                 out.writeUTF(serverName);
             } catch (IOException e) {

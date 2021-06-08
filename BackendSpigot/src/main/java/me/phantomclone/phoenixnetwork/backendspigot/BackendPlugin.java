@@ -15,6 +15,8 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.util.UUID;
+
 /**
  * @author PhantomClone
  * @since 1.0-SNAPSHOT
@@ -29,10 +31,17 @@ public class BackendPlugin extends JavaPlugin implements ClickableInventoryFacto
     public void onEnable() {
         this.backend = SpigotBackend.create(this);
 
-        getCommand("spigotTest").setExecutor((commandSender, command, s, strings) -> {
-            this.inventory.openInventory((Player) commandSender);
-            //BasicData basicData = this.backend.getStorageRegistry().getStoreObject(((Player) commandSender).getUniqueId(), BasicData.class);
-            //commandSender.sendMessage(new Gson().toJson(basicData));
+        getCommand("spigotTest1").setExecutor((commandSender, command, s, strings) -> {
+            BasicData basicData = this.backend.getStorageRegistry().getStoreObject(((Player) commandSender).getUniqueId(), BasicData.class);
+            commandSender.sendMessage(new Gson().toJson(basicData));
+            return true;
+        });
+        getCommand("spigotTest2").setExecutor((commandSender, command, s, strings) -> {
+            long start = System.currentTimeMillis();
+            this.backend.getStorageRegistry().getOfflineObject(BasicData.class, UUID.fromString("791addad-5ff2-49bd-ac04-d94f58ae3e0e"), basicData -> {
+                commandSender.sendMessage("Delay: " + (System.currentTimeMillis() - start) + "ms");
+                commandSender.sendMessage(new Gson().toJson(basicData));
+            });
             return true;
         });
 

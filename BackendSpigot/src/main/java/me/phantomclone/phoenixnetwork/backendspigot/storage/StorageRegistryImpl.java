@@ -1,8 +1,9 @@
 package me.phantomclone.phoenixnetwork.backendspigot.storage;
 
 import com.google.common.collect.Maps;
+import com.google.common.io.ByteArrayDataOutput;
+import com.google.common.io.ByteStreams;
 import com.google.gson.Gson;
-import me.phantomclone.phoenixnetwork.backendcore.storage.Storable;
 import me.phantomclone.phoenixnetwork.backendcore.storage.StorageRegistry;
 import me.phantomclone.phoenixnetwork.backendcore.storage.StorageType;
 import me.phantomclone.phoenixnetwork.backendspigot.BackendPlugin;
@@ -14,11 +15,14 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import redis.clients.jedis.Jedis;
+import redis.clients.jedis.JedisPool;
+import redis.clients.jedis.JedisPubSub;
 
 import java.lang.reflect.Field;
 import java.util.Map;
 import java.util.UUID;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 /**
  * @author PhantomClone
@@ -38,7 +42,7 @@ public class StorageRegistryImpl implements StorageRegistry<Player> {
 
     private Map<Class<?>, BiConsumer<Player, Map<String, Object>>> registerMap;
 
-    private Map<String, Long> lastStore;
+    private Map<String, Consumer<Boolean>> loadOfflineDataCallBack;
 
     public static StorageRegistryImpl create(BackendPlugin plugin) {
         return new StorageRegistryImpl(plugin);
@@ -50,15 +54,58 @@ public class StorageRegistryImpl implements StorageRegistry<Player> {
 
     @Override
     public void init() {
-        this.jedis = this.plugin.getBackend().getDatabaseLib().getJedisRegistry().getJedisPool("Basics").getResource();
+        JedisPool pool = this.plugin.getBackend().getDatabaseLib().getJedisRegistry().getJedisPool("Basics");
+        this.jedis = pool.getResource();
 
         this.objectMap = Maps.newHashMap();
         this.registerMap = Maps.newHashMap();
-        this.lastStore = Maps.newHashMap();
+        this.loadOfflineDataCallBack = Maps.newHashMap();
 
         this.listener = new LoginAndOutListener();
 
         this.plugin.getServer().getPluginManager().registerEvents(this.listener, this.plugin);
+
+        this.plugin.getServer().getScheduler().runTaskAsynchronously(this.plugin, () -> {
+            try (Jedis subRedis = pool.getResource()) {
+                subRedis.subscribe(new JedisPubSub() {
+                    @Override
+                    public void onMessage(String channel, String message) {
+                        if (channel.equalsIgnoreCase("BackendUpdateData")) {
+                            UUID uuid = UUID.fromString(message.split("/")[0]);
+                            String className = message.replace(uuid.toString() + "/", "");
+                            Map<String, Object> map = objectMap.get(uuid.toString());
+                            if (map != null) {
+                                Object object = map.get(className);
+                                if (object != null) {
+                                    String json = jedis.hget(uuid.toString(), className);
+                                    Object toParseObject = gson.fromJson(json, object.getClass());
+                                    for (Field field : object.getClass().getDeclaredFields()) {
+                                        try {
+                                            field.setAccessible(true);
+                                            Object toSetObject = field.get(toParseObject);
+                                            if (toSetObject != null)
+                                                field.set(object, toSetObject);
+                                        } catch (Exception e) {
+                                            e.printStackTrace();
+                                        }
+                                    }
+                                }
+                            }
+                        } else if (channel.equalsIgnoreCase("LoadedOfflinePlayer")) {
+                            UUID uuid = UUID.fromString(message.split("/")[0]);
+                            Consumer<Boolean> consumer = loadOfflineDataCallBack.get(uuid.toString());
+                            if (consumer == null) return;
+                            String result = message.replace(uuid.toString() + "/", "");
+                            if (result.equalsIgnoreCase("Failed")) {
+                                consumer.accept(false);
+                            } else {
+                                consumer.accept(true);
+                            }
+                        }
+                    }
+                }, "BackendUpdateData", "LoadedOfflinePlayer");
+            }
+        });
     }
 
     @Override
@@ -68,12 +115,7 @@ public class StorageRegistryImpl implements StorageRegistry<Player> {
 
     @Override
     public void registerStorable(Class<?> clazz, BiConsumer<Player, Map<String, Object>> defaultData) {
-        try {
-            clazz.getAnnotation(Storable.class);
-            this.registerMap.put(clazz, defaultData);
-        } catch (NullPointerException e) {
-            System.out.println("Class" + clazz.getName() + " is missing Storable!");
-        }
+        this.registerMap.put(clazz, defaultData);
     }
 
     @Override
@@ -86,13 +128,37 @@ public class StorageRegistryImpl implements StorageRegistry<Player> {
         return (B) this.objectMap.get(uuid.toString()).get(clazz.getSimpleName());
     }
 
-    @Override
     public void store(UUID uuid) {
-        this.lastStore.put(uuid.toString(), System.currentTimeMillis());
         this.objectMap.get(uuid.toString()).forEach((className, object) -> {
             this.plugin.getServer().getPluginManager().callEvent(new DataStoreInRedisEvent(uuid, className, object));
             this.jedis.hset(uuid.toString(), className, gson.toJson(object));
         });
+    }
+
+    @Override
+    public <B> void getOfflineObject(Class<B> clazz, UUID uuid, Consumer<B> consumer) {
+        if (this.jedis.hexists(uuid.toString(), clazz.getSimpleName())) {
+            String json = this.jedis.hget(uuid.toString(), clazz.getSimpleName());
+            consumer.accept(this.gson.fromJson(json, clazz));
+        } else if (this.jedis.hexists("offline." + uuid.toString(), clazz.getSimpleName())){
+            String json = this.jedis.hget("offline." + uuid.toString(), clazz.getSimpleName());
+            consumer.accept(this.gson.fromJson(json, clazz));
+        } else {
+            this.loadOfflineDataCallBack.put(uuid.toString(), b -> {
+                if (b) {
+                    getOfflineObject(clazz, uuid, consumer);
+                } else {
+                    consumer.accept(null);
+                }
+            });
+            this.jedis.publish("LoadOfflinePlayer", uuid.toString());
+        }
+    }
+
+    @Override
+    public void storeInRedis(UUID uuid, Object object) {
+        this.plugin.getServer().getPluginManager().callEvent(new DataStoreInRedisEvent(uuid, object.getClass().getSimpleName(), object));
+        this.jedis.hset(uuid.toString(), object.getClass().getSimpleName(), this.gson.toJson(object));
     }
 
     private Object fillObject(Class<?> clazz, Map<String, Object> fields) {
@@ -131,13 +197,10 @@ public class StorageRegistryImpl implements StorageRegistry<Player> {
                         objectMap.get(uuid.toString()).put(clazz.getSimpleName(), object);
                     } else {
                         try {
-                            Storable storable = clazz.getAnnotation(Storable.class);
-                            if (storable.storageType().equals(StorageType.PROXYMINECRAFT) || storable.storageType().equals(StorageType.MINECRAFT)) {
-                                Map<String, Object> fillMap = Maps.newHashMap();
-                                defaultCon.accept(event.getPlayer(), fillMap);
-                                Object o = fillObject(clazz, fillMap);
-                                objectMap.get(uuid.toString()).put(clazz.getSimpleName(), o);
-                            }
+                            Map<String, Object> fillMap = Maps.newHashMap();
+                            defaultCon.accept(event.getPlayer(), fillMap);
+                            Object o = fillObject(clazz, fillMap);
+                            objectMap.get(uuid.toString()).put(clazz.getSimpleName(), o);
                         } catch (NullPointerException e) {
                             System.out.println("Class" + clazz.getName() + " is missing Storable!");
                         }
@@ -148,10 +211,7 @@ public class StorageRegistryImpl implements StorageRegistry<Player> {
 
         @EventHandler(priority = EventPriority.HIGHEST)
         public void onQuit(PlayerQuitEvent event) {
-            UUID uuid = event.getPlayer().getUniqueId();
-            if (!lastStore.containsKey(uuid.toString()) || (System.currentTimeMillis() - lastStore.get(uuid.toString())) > 1000) {
-                store(uuid);
-            }
+            UUID uuid = event.getPlayer().getUniqueId();store(uuid);
             objectMap.remove(event.getPlayer().getUniqueId().toString());
         }
 

@@ -1,0 +1,4 @@
+main: me.phantomclone.phoenixnetwork.backendbungee.BackendPlugin
+name: ProxyBackend
+author: PhantomClone
+version: 1.0A

@@ -3,4 +3,5 @@ name: SpigotBackend
 author: PhantomClone
 version: 1.0
 commands:
-  spigotTest:
+  spigotTest1:
+  spigotTest2:

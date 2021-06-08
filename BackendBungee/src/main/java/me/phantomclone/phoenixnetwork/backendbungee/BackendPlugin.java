@@ -5,6 +5,7 @@
 package me.phantomclone.phoenixnetwork.backendbungee;
 
 import com.google.common.collect.Lists;
+import com.google.gson.Gson;
 import me.phantomclone.phoenixnetwork.backendbungee.server.ServerRegistry;
 import me.phantomclone.phoenixnetwork.backendbungee.server.ServerRegistryImpl;
 import me.phantomclone.phoenixnetwork.backendbungee.storage.BasicData;
@@ -22,6 +23,7 @@ import net.md_5.bungee.api.plugin.Plugin;
 import net.md_5.bungee.event.EventHandler;
 
 import java.util.Map;
+import java.util.UUID;
 import java.util.function.BiConsumer;
 
 /**
@@ -57,6 +59,16 @@ public class BackendPlugin extends Plugin implements Listener {
             public void execute(CommandSender sender, String[] args) {
                 //Just to save
                 ((StorageRegistryImpl)backend.getStorageRegistry()).removeBlockedUUID(args[0]);
+            }
+        });
+        getProxy().getPluginManager().registerCommand(this, new Command("Test2") {
+            @Override
+            public void execute(CommandSender sender, String[] args) {
+                    long start = System.currentTimeMillis();
+                    backend.getStorageRegistry().getOfflineObject(BasicData.class, UUID.fromString("791addad-5ff2-49bd-ac04-d94f58ae3e0e"), basicData -> {
+                        sender.sendMessage(new TextComponent("Delay: " + (System.currentTimeMillis() - start) + "ms"));
+                        sender.sendMessage(new TextComponent(new Gson().toJson(basicData)));
+                    });
             }
         });
 

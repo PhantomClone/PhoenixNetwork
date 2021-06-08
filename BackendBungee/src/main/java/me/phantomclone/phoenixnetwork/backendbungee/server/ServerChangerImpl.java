@@ -60,24 +60,30 @@ public class ServerChangerImpl implements ServerChanger<ProxiedPlayer>, Listener
     public void onMessage(PluginMessageEvent event) {
         if (event.getTag().equalsIgnoreCase("BackendChannel")) {
             ByteArrayDataInput in = ByteStreams.newDataInput(event.getData());
-            String uuid = in.readUTF();
-            ProxiedPlayer player = this.plugin.getProxy().getPlayer(UUID.fromString(uuid));
-            if (player == null) {
-                System.out.println("Big error in PluginMessageEvent... uuid do not match with a player!");
-                return;
-            }
-            String server = in.readUTF();
-            if (server.equalsIgnoreCase("BackToLobby")) {
-                Server randomLobbyServer = getRandomLobbyServer();
-                if (randomLobbyServer == null) {
-                    player.disconnect(new TextComponent("§cEs wurde keine Lobby gefunden!"));
-                } else {
-                    this.plugin.getServerRegistry().sendPlayerToServer(player, server, b -> {});
+            String first = in.readUTF();
+            if (first.equalsIgnoreCase("SendPlayerToServer")) {
+                String uuid = in.readUTF();
+                ProxiedPlayer player = this.plugin.getProxy().getPlayer(UUID.fromString(uuid));
+                if (player == null) {
+                    System.out.println("Big error in PluginMessageEvent... uuid do not match with a player!");
+                    return;
                 }
-            } else if (server.contains(":")) {
-                this.plugin.getServerRegistry().sendPlayerToServer(player, server.replace(":", "_"), b -> {});
-            } else {
-                this.plugin.getServerRegistry().sendPlayerToServer(player, server, b -> {});
+                String server = in.readUTF();
+                if (server.equalsIgnoreCase("BackToLobby")) {
+                    Server randomLobbyServer = getRandomLobbyServer();
+                    if (randomLobbyServer == null) {
+                        player.disconnect(new TextComponent("§cEs wurde keine Lobby gefunden!"));
+                    } else {
+                        this.plugin.getServerRegistry().sendPlayerToServer(player, server, b -> {
+                        });
+                    }
+                } else if (server.contains(":")) {
+                    this.plugin.getServerRegistry().sendPlayerToServer(player, server.replace(":", "_"), b -> {
+                    });
+                } else {
+                    this.plugin.getServerRegistry().sendPlayerToServer(player, server, b -> {
+                    });
+                }
             }
         }
     }

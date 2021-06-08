@@ -2,8 +2,6 @@ package me.phantomclone.phoenixnetwork.backendspigot.storage;
 
 import com.google.common.collect.Lists;
 import me.phantomclone.phoenixnetwork.backendcore.language.LanguageEnum;
-import me.phantomclone.phoenixnetwork.backendcore.storage.Storable;
-import me.phantomclone.phoenixnetwork.backendcore.storage.StorageType;
 
 import java.util.List;
 
@@ -11,7 +9,6 @@ import java.util.List;
  * @author PhantomClone
  * @since 1.0-SNAPSHOT
  */
-@Storable(storageType = StorageType.PROXYMINECRAFT)
 public class BasicData {
 
     private String name;
