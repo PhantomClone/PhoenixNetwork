@@ -246,7 +246,7 @@ public class StorageRegistryImpl implements StorageRegistry<ProxiedPlayer> {
            } else if (this.jedis.exists("offline." + uuid.toString())) {
                //It should not happened, that offline has not the json loaded
                String json = this.jedis.hget("offline." + uuid.toString(), clazz.getSimpleName());
-               jedis.expire("offline." + uuid.toString(), 20);
+               jedis.expire("offline." + uuid.toString(), 60 * 5);
                consumer.accept(this.gson.fromJson(json, clazz));
            } else {
                loadDataOutOfMongoDB(uuid, null, document -> {
@@ -258,7 +258,7 @@ public class StorageRegistryImpl implements StorageRegistry<ProxiedPlayer> {
                        jedis.hset("offline." + uuid.toString(), clazzName, json.toString());
                        jedis.hset("toSave." + uuid.toString(), clazzName, json.toString());
                    });
-                   jedis.expire("offline." + uuid.toString(), 20);
+                   jedis.expire("offline." + uuid.toString(), 60 * 5);
                    consumer.accept(!document.containsKey(clazz.getSimpleName()) ? null : gson.fromJson(document.get(clazz.getSimpleName()).toString(), clazz));
                }, throwable -> consumer.accept(null));
            }
