@@ -187,22 +187,7 @@ public class StorageRegistryImpl implements StorageRegistry<ProxiedPlayer> {
         redisMap.forEach(document::append);
 
         Publisher<UpdateResult> publisher = collection.replaceOne(Filters.eq("_id", uuid.toString()), document);
-        publisher.subscribe(new UpdateResultSubscriber(b -> {
-            if (b) {
-                this.blockedUUIDs.remove(uuid.toString());
-            } else {
-                Config config = ConfigImpl.create();
-                config.set("Error", "Filter: _id:" + uuid + " no match");
-                config.set("uuid", uuid.toString());
-                config.set("data", gson.toJson(redisMap));
-                File saveFile = new File("./plugins/Backend/SaveDataFail/", uuid.toString() + "--" + (new Random().nextInt(100)));
-                try {
-                    config.save(saveFile);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        }, throwable -> {
+        publisher.subscribe(new UpdateResultSubscriber(b -> {}, throwable -> {
             Config config = ConfigImpl.create();
             config.set("Error", throwable.getMessage());
             config.set("uuid", uuid.toString());

@@ -23,7 +23,7 @@ import java.util.UUID;
  */
 public class BackendPlugin extends JavaPlugin implements ClickableInventoryFactory {
 
-    private Backend<Player> backend;
+    private Backend<Player, CommandSender> backend;
 
     private ClickableInventory inventory;
 
@@ -63,7 +63,7 @@ public class BackendPlugin extends JavaPlugin implements ClickableInventoryFacto
         this.inventory.registerListener();
     }
 
-    public Backend<Player> getBackend() {
+    public Backend<Player, CommandSender> getBackend() {
         return backend;
     }
 

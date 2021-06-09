@@ -4,6 +4,7 @@
 
 package me.phantomclone.phoenixnetwork.backendcore;
 
+import me.phantomclone.phoenixnetwork.backendcore.command.CommandRegistry;
 import me.phantomclone.phoenixnetwork.backendcore.database.DatabaseLib;
 import me.phantomclone.phoenixnetwork.backendcore.database.DatabaseLibImpl;
 import me.phantomclone.phoenixnetwork.backendcore.language.LanguageRegistry;
@@ -17,7 +18,7 @@ import me.phantomclone.phoenixnetwork.backendcore.thread.ThreadPoolRegistryImpl;
  * @author PhantomClone
  * @since 1.0-SNAPSHOT
  */
-public abstract class Backend<T> {
+public abstract class Backend<T, B> {
 
     private final ThreadPoolRegistry threadPoolRegistry;
     private final DatabaseLib databaseLib;
@@ -31,6 +32,7 @@ public abstract class Backend<T> {
 
     public abstract StorageRegistry<T> getStorageRegistry();
     public abstract ServerChanger<T> getServerChanger();
+    public abstract CommandRegistry<B> getCommandRegistry();
 
     public DatabaseLib getDatabaseLib() {
         return this.databaseLib;

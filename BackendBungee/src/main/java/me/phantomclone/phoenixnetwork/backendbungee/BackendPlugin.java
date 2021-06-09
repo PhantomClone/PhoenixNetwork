@@ -13,6 +13,7 @@ import me.phantomclone.phoenixnetwork.backendbungee.storage.DataLoadOutDBEvent;
 import me.phantomclone.phoenixnetwork.backendbungee.storage.DataStoreInDBEvent;
 import me.phantomclone.phoenixnetwork.backendbungee.storage.StorageRegistryImpl;
 import me.phantomclone.phoenixnetwork.backendcore.Backend;
+import me.phantomclone.phoenixnetwork.backendcore.command.CommandImpl;
 import net.md_5.bungee.api.CommandSender;
 import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.config.ServerInfo;
@@ -25,6 +26,7 @@ import net.md_5.bungee.event.EventHandler;
 import java.util.Map;
 import java.util.UUID;
 import java.util.function.BiConsumer;
+import java.util.regex.Pattern;
 
 /**
  * @author PhantomClone
@@ -32,7 +34,7 @@ import java.util.function.BiConsumer;
  */
 public class BackendPlugin extends Plugin implements Listener {
 
-    private Backend<ProxiedPlayer> backend;
+    private Backend<ProxiedPlayer, CommandSender> backend;
     private ServerRegistry serverRegistry;
 
     @Override
@@ -97,6 +99,19 @@ public class BackendPlugin extends Plugin implements Listener {
                 }
             }
         });
+        commandTest();
+    }
+
+    private void commandTest() {
+
+        me.phantomclone.phoenixnetwork.backendcore.command.Command<CommandSender> command = new CommandImpl<>("Test");
+        command.firstHelpConsumer(sender -> sender.sendMessage(new TextComponent("First Help!")))
+                .lastHelpConsumer(sender -> sender.sendMessage(new TextComponent("Last Help!")))
+                .noArgsConsumer(sender -> sender.sendMessage(new TextComponent("U run no Args")))
+                .addAliases("max")
+                .addSubCommand().setHelp(sender -> sender.sendMessage(new TextComponent("SubHelp"))).addFilter(0, s -> s.equalsIgnoreCase("test")).addFilter(1, s -> Pattern.compile("-?[0-9]+").matcher(s).matches(), (sender, s) -> sender.sendMessage(new TextComponent(s + " ist keine Zahl!")))
+                .execute((player, args) -> player.sendMessage(new TextComponent("Sub command run!" + player.getDisplayName())), ProxiedPlayer.class, sender -> sender.sendMessage(new TextComponent("Du bist kein Spieler!")));
+        getBackend().getCommandRegistry().registerCommand(command);
     }
 
     @Override
@@ -128,7 +143,7 @@ public class BackendPlugin extends Plugin implements Listener {
         }
     }
 
-    public Backend<ProxiedPlayer> getBackend() {
+    public Backend<ProxiedPlayer, CommandSender> getBackend() {
         return backend;
     }
 
