@@ -109,11 +109,11 @@ public class CloudLib {
     }
 
     /**
-     * Find and register all packets in the package 'net.ghastgames.ghastcloud.cloudlib.network.packet.packets'.
+     * Find and register all packets in the package 'me.phantomclone.phoenixnetwork.cloudlib.network.packet.packets'.
      * Then it sorts the packets with {@link PacketRegistry#shuffle()}.
      */
     private void registerPackets() {
-        String packetListPackage = "net.ghastgames.ghastcloud.cloudlib.network.packet.packets";
+        String packetListPackage = "me.phantomclone.phoenixnetwork.cloudlib.network.packet.packets";
         Reflections reflections = new Reflections(packetListPackage);
         Set<Class<?>> classes = reflections.getTypesAnnotatedWith(Packet.class);
         classes.forEach(aClass -> getPacketRegistry().registerPacket(aClass));
