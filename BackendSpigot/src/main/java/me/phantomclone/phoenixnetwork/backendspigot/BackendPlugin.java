@@ -9,6 +9,7 @@ import me.phantomclone.phoenixnetwork.backendspigot.storage.BasicData;
 import org.bukkit.Material;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
+import org.bukkit.command.PluginCommand;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
@@ -25,25 +26,26 @@ public class BackendPlugin extends JavaPlugin implements ClickableInventoryFacto
 
     private Backend<Player, CommandSender> backend;
 
-    private ClickableInventory inventory;
-
     @Override
     public void onEnable() {
         this.backend = SpigotBackend.create(this);
-
-        getCommand("spigotTest1").setExecutor((commandSender, command, s, strings) -> {
-            BasicData basicData = this.backend.getStorageRegistry().getStoreObject(((Player) commandSender).getUniqueId(), BasicData.class);
-            commandSender.sendMessage(new Gson().toJson(basicData));
-            return true;
-        });
-        getCommand("spigotTest2").setExecutor((commandSender, command, s, strings) -> {
-            long start = System.currentTimeMillis();
-            this.backend.getStorageRegistry().getOfflineObject(BasicData.class, UUID.fromString("791addad-5ff2-49bd-ac04-d94f58ae3e0e"), basicData -> {
-                commandSender.sendMessage("Delay: " + (System.currentTimeMillis() - start) + "ms");
+        PluginCommand spigotTest1Command = getCommand("spigotTest1");
+        if (spigotTest1Command != null)
+            spigotTest1Command.setExecutor((commandSender, command, s, strings) -> {
+                BasicData basicData = this.backend.getStorageRegistry().getStoreObject(((Player) commandSender).getUniqueId(), BasicData.class);
                 commandSender.sendMessage(new Gson().toJson(basicData));
+                return true;
             });
-            return true;
-        });
+        PluginCommand spigotTest2Command = getCommand("spigotTest2");
+        if (spigotTest2Command != null)
+            spigotTest2Command.setExecutor((commandSender, command, s, strings) -> {
+                long start = System.currentTimeMillis();
+                this.backend.getStorageRegistry().getOfflineObject(BasicData.class, UUID.fromString("791addad-5ff2-49bd-ac04-d94f58ae3e0e"), basicData -> {
+                    commandSender.sendMessage("Delay: " + (System.currentTimeMillis() - start) + "ms");
+                    commandSender.sendMessage(new Gson().toJson(basicData));
+                });
+                return true;
+            });
 
         this.backend.getDatabaseLib().getJedisRegistry().load();
         this.backend.getStorageRegistry().init();
@@ -55,12 +57,6 @@ public class BackendPlugin extends JavaPlugin implements ClickableInventoryFacto
             map.put("nameHistory", Lists.newArrayList(player.getName()));
             map.put("language", 0);
         });
-
-
-        this.inventory = createClickableInventory(getServer().createInventory(null, 9), this);
-        this.inventory.setFillItem(new ItemStack(Material.ANVIL));
-        this.inventory.update();
-        this.inventory.registerListener();
     }
 
     public Backend<Player, CommandSender> getBackend() {

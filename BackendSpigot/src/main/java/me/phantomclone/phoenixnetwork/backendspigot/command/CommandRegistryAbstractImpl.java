@@ -31,12 +31,9 @@ public class CommandRegistryAbstractImpl implements CommandRegistryAbstract<Comm
 
     private CommandRegistryAbstractImpl(Plugin plugin) {
         this.plugin = plugin;
-        this.commandExecutor = new CommandExecutor() {
-            @Override
-            public boolean onCommand(CommandSender commandSender, org.bukkit.command.Command command, String label, String[] args) {
-                commands.stream().filter(c -> c.getCommandAliases().stream().anyMatch(s -> s.equalsIgnoreCase(label))).forEach(cc -> cc.executeCommand(commandSender, args));
-                return true;
-            }
+        this.commandExecutor = (commandSender, command, label, args) -> {
+            commands.stream().filter(c -> c.getCommandAliases().stream().anyMatch(s -> s.equalsIgnoreCase(label))).forEach(cc -> cc.executeCommand(commandSender, args));
+            return true;
         };
     }
 
